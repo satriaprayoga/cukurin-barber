@@ -1,0 +1,45 @@
+{
+    "debug": true,
+    "jwt_secret": "p3rpetualMoti0n",
+    "expire_jwt":72,
+    "server":{
+        "run_mode":"debug",
+        "http_port":9000,
+        "read_timeout":600,
+        "write_timeout":600
+    },
+    "app": {
+        "jwt_secret": "p3rpetualMoti0n",
+        "page_size": 10,
+        "prefix_url": "http://127.0.0.1:8000",
+        "runtime_root_path": "wwwroot/runtime/",
+        "image_save_path": "wwwroot/uploads/images",
+        "image_size": 5,
+        "image_allow_ext": ".jpg,.jpeg,.png",
+        "export_save_path": "wwwroot/export/",
+        "qr_code": "wwwroot/qr_code/",
+        "log_save_path": "logs/",
+        "log_save_name": "log",
+        "log_file_ext": "log",
+        "time_format": 20060102,
+        "issuer": "CukurinApp2023",
+        "url_forgot_password":"http://localhost:8084"
+    },
+    "database":{
+        "type": "postgres",
+        "host": "localhost",
+        "port": "5432",
+        "user": "postgres",
+        "password": "asdqwe123",
+        "name": "cukurin",
+        "table_prefix": ""
+    },
+    "redisdb":{
+        "host":"127.0.0.1",
+        "port":6379,
+        "db":0,
+        "key":"cuks_email",
+        "password":""
+    }
+
+}
