@@ -3,10 +3,12 @@ module github.com/satriaprayoga/cukurin-barber
 go 1.19
 
 require (
+	github.com/astaxie/beego v1.12.3
 	github.com/fatih/structs v1.1.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.10.2
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.15.0
 	golang.org/x/crypto v0.7.0
 	gorm.io/driver/postgres v1.5.0
@@ -25,8 +27,8 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
+	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

@@ -4,9 +4,9 @@ import "time"
 
 type Paket struct {
 	PaketID     int        `json:"paket_id" gorm:"primary_key;auto_increment:true"`
-	OwnerID     int        `json:"barber_id" gorm:"PRIMARY_KEY;type:integer"`
+	OwnerID     int        `json:"owner_id" gorm:"PRIMARY_KEY;type:integer"`
 	PaketName   string     `json:"paket_name" gorm:"type:varchar(60)"`
-	Desc        string     `json:"descs" gorm:"type:varchar(200)"`
+	Descs       string     `json:"descs" gorm:"type:varchar(200)"`
 	DurasiStart int        `json:"durasi_start" gorm:"type:integer"`
 	DurasiEnd   int        `json:"durasi_end" gorm:"type:integer"`
 	Price       float32    `json:"price" gorm:"type:numeric(20,4)"`

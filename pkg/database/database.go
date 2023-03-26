@@ -69,8 +69,13 @@ func Setup() {
 func migrate() {
 	log.Println("START AUTO MIGRATE")
 	Conn.AutoMigrate(
-		//models.KUser{},
-		//models.KSession{},
+		models.KUser{},
+		models.KSession{},
+		models.Paket{},
+		models.CapsterCollection{},
+		models.Barber{},
+		models.BarberPaket{},
+		models.BarberCapster{},
 		models.FileUpload{})
 	log.Println("FINISHING AUTO MIGRATE ")
 }
