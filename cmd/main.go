@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
+	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
+	"github.com/satriaprayoga/cukurin-barber/pkg/sessions"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
 )
 
@@ -9,8 +11,8 @@ func init() {
 	settings.Setup("./config/config.json")
 	database.Setup()
 	// redisdb.Setup()
-	//sessions.Setup()
-	//logging.Setup()
+	sessions.Setup()
+	logging.Setup()
 }
 
 func main() {
