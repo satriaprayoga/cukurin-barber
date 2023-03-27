@@ -1,10 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
 	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
 	"github.com/satriaprayoga/cukurin-barber/pkg/sessions"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
+	"github.com/satriaprayoga/cukurin-barber/routes"
 )
 
 func init() {
@@ -17,6 +23,15 @@ func init() {
 
 func main() {
 
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+
+	R := routes.AppRoute{E: e}
+	R.Setup()
+	sPort := fmt.Sprintf(":%d", settings.AppConfigSetting.Server.HTTPPort)
+	log.Fatal(e.Start(sPort))
 	// settings.Setup("./config/config.json")
 
 	// token_builder := token.NewJWTBuilder(settings.AppConfigSetting.App.JwtSecret)
