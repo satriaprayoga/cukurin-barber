@@ -1,4 +1,4 @@
-package services
+package usecases
 
 import (
 	"context"
@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
+	"github.com/satriaprayoga/cukurin-barber/interfaces/services"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/sessions"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
 	"github.com/satriaprayoga/cukurin-barber/pkg/utils"
-	repo "github.com/satriaprayoga/cukurin-barber/repository/k_user"
 	"github.com/satriaprayoga/cukurin-barber/token"
 )
 
@@ -20,7 +21,7 @@ type authService struct {
 	contextTimeOut time.Duration
 }
 
-func NewAuthService(a repo.IKUserRepository /*b repo.IKSessionRepository,*/, timeout time.Duration) IAuthService {
+func NewAuthService(a repo.IKUserRepository /*b repo.IKSessionRepository,*/, timeout time.Duration) services.IAuthService {
 	return &authService{repoKUser: a /*repoKSession: b,*/, contextTimeOut: timeout}
 }
 

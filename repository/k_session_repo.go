@@ -1,8 +1,9 @@
-package repo
+package repoimpl
 
 import (
 	"fmt"
 
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
 	"gorm.io/gorm"
@@ -12,7 +13,7 @@ type repoKSession struct {
 	Conn *gorm.DB
 }
 
-func NewRepoKSession(Conn *gorm.DB) IKSessionRepository {
+func NewRepoKSession(Conn *gorm.DB) repo.IKSessionRepository {
 	return &repoKSession{Conn}
 }
 

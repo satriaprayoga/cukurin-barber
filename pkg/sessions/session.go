@@ -5,16 +5,17 @@ import (
 	"log"
 	"time"
 
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
-	repo "github.com/satriaprayoga/cukurin-barber/repository/k_session"
+	repoimpl "github.com/satriaprayoga/cukurin-barber/repository"
 )
 
 var sessionRepo repo.IKSessionRepository
 
 func Setup() {
 	now := time.Now()
-	sessionRepo = repo.NewRepoKSession(database.Conn)
+	sessionRepo = repoimpl.NewRepoKSession(database.Conn)
 	timeSpent := time.Since(now)
 	log.Printf("Config session is ready in %v", timeSpent)
 }

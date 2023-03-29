@@ -11,12 +11,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/satriaprayoga/cukurin-barber/form"
+	"github.com/satriaprayoga/cukurin-barber/interfaces/services"
 	"github.com/satriaprayoga/cukurin-barber/middlewares"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
 	"github.com/satriaprayoga/cukurin-barber/pkg/response"
 	"github.com/satriaprayoga/cukurin-barber/pkg/utils"
-	"github.com/satriaprayoga/cukurin-barber/services"
 )
 
 type FileUploadController struct {

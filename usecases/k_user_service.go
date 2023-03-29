@@ -1,4 +1,4 @@
-package services
+package usecases
 
 import (
 	"context"
@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/fatih/structs"
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
+	"github.com/satriaprayoga/cukurin-barber/interfaces/services"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
 	"github.com/satriaprayoga/cukurin-barber/pkg/utils"
-	repo "github.com/satriaprayoga/cukurin-barber/repository/k_user"
 	"github.com/satriaprayoga/cukurin-barber/token"
 )
 
@@ -20,7 +21,7 @@ type kUserService struct {
 	contextTimeOut time.Duration
 }
 
-func NewKUserService(kUserRepo repo.IKUserRepository, cto time.Duration) IKUserService {
+func NewKUserService(kUserRepo repo.IKUserRepository, cto time.Duration) services.IKUserService {
 	return &kUserService{kuserrepo: kUserRepo, contextTimeOut: cto}
 }
 

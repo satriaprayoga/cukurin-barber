@@ -7,8 +7,8 @@ import (
 	"github.com/satriaprayoga/cukurin-barber/controllers"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
-	repo "github.com/satriaprayoga/cukurin-barber/repository/file_upload"
-	"github.com/satriaprayoga/cukurin-barber/services"
+	repoimpl "github.com/satriaprayoga/cukurin-barber/repository"
+	"github.com/satriaprayoga/cukurin-barber/usecases"
 )
 
 type AppRoute struct {
@@ -18,7 +18,7 @@ type AppRoute struct {
 func (a *AppRoute) Setup() {
 	timeOutContext := time.Duration(settings.AppConfigSetting.Server.ReadTimeOut) * time.Second
 
-	fileRepo := repo.NewRepoFileUpload(database.Conn)
-	fileService := services.NewFileUploadSevice(fileRepo, timeOutContext)
+	fileRepo := repoimpl.NewRepoFileUpload(database.Conn)
+	fileService := usecases.NewFileUploadSevice(fileRepo, timeOutContext)
 	controllers.NewFileUploadController(a.E, fileService)
 }

@@ -1,8 +1,9 @@
-package repo
+package repoimpl
 
 import (
 	"fmt"
 
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
 	"gorm.io/gorm"
@@ -12,7 +13,7 @@ type repoFileUpload struct {
 	Conn *gorm.DB
 }
 
-func NewRepoFileUpload(Conn *gorm.DB) IFileUploadRepository {
+func NewRepoFileUpload(Conn *gorm.DB) repo.IFileUploadRepository {
 	return &repoFileUpload{Conn}
 }
 

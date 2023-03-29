@@ -1,28 +1,29 @@
-package repo
+package repoimpl
 
 import (
 	"fmt"
 
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
 	"gorm.io/gorm"
 )
 
-type repoPaket struct {
+type repoBarberPaket struct {
 	Conn *gorm.DB
 }
 
-func NewRepoPaket(Conn *gorm.DB) IPaketRepository {
-	return &repoPaket{Conn}
+func NewRepoBarberPaket(Conn *gorm.DB) repo.IBarberPaketRepository {
+	return &repoBarberPaket{Conn}
 }
 
-func (db *repoPaket) GetDataBy(ID int) (result *models.Paket, err error) {
+func (db *repoBarberPaket) GetDataBy(ID int) (result *models.BarberPaket, err error) {
 	var (
-		logger = logging.Logger{}
-		mPaket = &models.Paket{}
+		logger       = logging.Logger{}
+		mBarberPaket = &models.BarberPaket{}
 	)
-	query := db.Conn.Where("paket_id = ? ", ID).Find(mPaket)
+	query := db.Conn.Where("barber_id = ? ", ID).Find(mBarberPaket)
 	logger.Query(fmt.Sprintf("%v", query))
 	err = query.Error
 	if err != nil {
@@ -31,10 +32,9 @@ func (db *repoPaket) GetDataBy(ID int) (result *models.Paket, err error) {
 		}
 		return nil, err
 	}
-	return mPaket, nil
+	return mBarberPaket, nil
 }
-
-func (db *repoPaket) GetList(queryparam models.ParamList) (result []*models.Paket, err error) {
+func (db *repoBarberPaket) GetList(queryparam models.ParamList) (result []*models.Paket, err error) {
 
 	var (
 		pageNum  = 0
@@ -42,7 +42,6 @@ func (db *repoPaket) GetList(queryparam models.ParamList) (result []*models.Pake
 		sWhere   = ""
 		logger   = logging.Logger{}
 		orderBy  = queryparam.SortField
-		query    *gorm.DB
 	)
 	// pagination
 	if queryparam.Page > 0 {
@@ -66,17 +65,16 @@ func (db *repoPaket) GetList(queryparam models.ParamList) (result []*models.Pake
 
 	if queryparam.Search != "" {
 		if sWhere != "" {
-			sWhere += " and (lower(paket_name) LIKE ? OR lower(descs) LIKE ?)" //+ queryparam.Search
+			sWhere += " and " + queryparam.Search
 		} else {
-			sWhere += "(lower(barber_name) LIKE ? OR lower(descs) LIKE ?)" //queryparam.Search
+			sWhere += queryparam.Search
 		}
-		query = db.Conn.Where(sWhere, queryparam.Search, queryparam.Search).Offset(pageNum).Limit(pageSize).Order(orderBy).Find(&result)
-	} else {
-		query = db.Conn.Where(sWhere).Offset(pageNum).Limit(pageSize).Order(orderBy).Find(&result)
 	}
 
 	// end where
 
+	// query := db.Conn.Where(sWhere).Offset(pageNum).Limit(pageSize).Order(orderBy).Find(&result)
+	query := db.Conn.Table("barber_paket").Select("paket.paket_id,paket.owner_id,paket.paket_name,paket.descs,paket.durasi_start,paket.durasi_end,paket.price,paket.is_active,paket.is_promo,paket.promo_price,paket.promo_start,paket.promo_end").Joins("left join paket ON paket.paket_id = barber_paket.paket_id").Where(sWhere).Offset(pageNum).Limit(pageSize).Order(orderBy).Find(&result)
 	logger.Query(fmt.Sprintf("%v", query)) //cath to log query string
 	err = query.Error
 
@@ -88,7 +86,7 @@ func (db *repoPaket) GetList(queryparam models.ParamList) (result []*models.Pake
 	}
 	return result, nil
 }
-func (db *repoPaket) Create(data *models.Paket) error {
+func (db *repoBarberPaket) Create(data *models.BarberPaket) error {
 	var (
 		logger = logging.Logger{}
 		err    error
@@ -101,12 +99,12 @@ func (db *repoPaket) Create(data *models.Paket) error {
 	}
 	return nil
 }
-func (db *repoPaket) Update(ID int, data map[string]interface{}) error {
+func (db *repoBarberPaket) Update(ID int, data interface{}) error {
 	var (
 		logger = logging.Logger{}
 		err    error
 	)
-	query := db.Conn.Model(models.Paket{}).Where("paket_id = ?", ID).Updates(data)
+	query := db.Conn.Model(models.BarberPaket{}).Where("barber_id = ?", ID).Updates(data)
 	logger.Query(fmt.Sprintf("%v", query)) //cath to log query string
 	err = query.Error
 	if err != nil {
@@ -114,12 +112,13 @@ func (db *repoPaket) Update(ID int, data map[string]interface{}) error {
 	}
 	return nil
 }
-func (db *repoPaket) Delete(ID int) error {
+func (db *repoBarberPaket) Delete(ID int) error {
 	var (
 		logger = logging.Logger{}
 		err    error
 	)
-	query := db.Conn.Where("paket_id = ?", ID).Delete(&models.Paket{})
+	// query := db.Conn.Where("barber_id = ?", ID).Delete(&models.BarberPaket{})
+	query := db.Conn.Exec("Delete From barber_paket WHERE barber_id = ?", ID)
 	logger.Query(fmt.Sprintf("%v", query)) //cath to log query string
 	err = query.Error
 	if err != nil {
@@ -127,11 +126,10 @@ func (db *repoPaket) Delete(ID int) error {
 	}
 	return nil
 }
-func (db *repoPaket) Count(queryparam models.ParamList) (result int64, err error) {
+func (db *repoBarberPaket) Count(queryparam models.ParamList) (result int64, err error) {
 	var (
 		sWhere = ""
 		logger = logging.Logger{}
-		query  *gorm.DB
 	)
 	result = 0
 
@@ -142,16 +140,13 @@ func (db *repoPaket) Count(queryparam models.ParamList) (result int64, err error
 
 	if queryparam.Search != "" {
 		if sWhere != "" {
-			sWhere += " and (lower(paket_name) LIKE ? OR lower(descs) LIKE ?)" //+ queryparam.Search
-		} else {
-			sWhere += "(lower(barber_name) LIKE ? OR lower(descs) LIKE ?)" //queryparam.Search
+			sWhere += " and " + queryparam.Search
 		}
-		query = db.Conn.Model(&models.Paket{}).Where(sWhere, queryparam.Search, queryparam.Search).Count(&result)
-	} else {
-		query = db.Conn.Model(&models.Paket{}).Where(sWhere).Count(&result)
 	}
 	// end where
 
+	// query := db.Conn.Model(&models.BarberPaket{}).Where(sWhere).Count(&result)
+	query := db.Conn.Table("k_user").Select("k_user.user_id as barber_id,k_user.name,k_user.is_active, 0 as rating").Where(sWhere).Count(&result)
 	logger.Query(fmt.Sprintf("%v", query)) //cath to log query string
 	err = query.Error
 	if err != nil {

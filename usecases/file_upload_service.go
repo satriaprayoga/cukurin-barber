@@ -1,11 +1,12 @@
-package services
+package usecases
 
 import (
 	"context"
 	"time"
 
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
+	"github.com/satriaprayoga/cukurin-barber/interfaces/services"
 	"github.com/satriaprayoga/cukurin-barber/models"
-	repo "github.com/satriaprayoga/cukurin-barber/repository/file_upload"
 )
 
 type fileUploadService struct {
@@ -13,7 +14,7 @@ type fileUploadService struct {
 	contextTimeOut time.Duration
 }
 
-func NewFileUploadSevice(a repo.IFileUploadRepository, timeout time.Duration) IFileUploadService {
+func NewFileUploadSevice(a repo.IFileUploadRepository, timeout time.Duration) services.IFileUploadService {
 	return &fileUploadService{repoFileUpload: a, contextTimeOut: timeout}
 }
 

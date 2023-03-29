@@ -1,8 +1,9 @@
-package repo
+package repoimpl
 
 import (
 	"fmt"
 
+	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/logging"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
@@ -13,7 +14,7 @@ type repoKUser struct {
 	Conn *gorm.DB
 }
 
-func NewRepoKUser(Conn *gorm.DB) IKUserRepository {
+func NewRepoKUser(Conn *gorm.DB) repo.IKUserRepository {
 	return &repoKUser{Conn}
 }
 
