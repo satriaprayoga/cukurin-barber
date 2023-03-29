@@ -60,7 +60,7 @@ func Setup() {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 
-	migrate()
+	go migrate()
 
 	timeSpent := time.Since(now)
 	log.Printf("Config database is ready in %v", timeSpent)
@@ -77,6 +77,24 @@ func migrate() {
 		models.BarberPaket{},
 		models.BarberCapster{},
 		models.FileUpload{})
+
+	Conn.Exec(`
+	CREATE OR REPLACE VIEW public.v_capster
+	AS
+	SELECT 
+		k_user.user_id as capster_id,k_user.user_name,k_user.name,
+		k_user.is_active,file_upload.file_id,file_upload.file_name,
+		file_upload.file_path,file_upload.file_type, 0 as rating,
+		(case when b.barber_id is not null then true else false end) as in_use,
+		k_user.user_type,k_user.user_input,k_user.time_edit ,b.barber_id,
+		b.barber_name
+		
+	 FROM "k_user" 
+		left join file_upload ON file_upload.file_id = k_user.file_id
+		left join barber_capster bc on bc.capster_id = k_user.user_id 
+		left join barber b on bc.barber_id =b.barber_id 
+		and b.owner_id::varchar = k_user.user_input;
+	`)
 	log.Println("FINISHING AUTO MIGRATE ")
 }
 
@@ -97,10 +115,10 @@ func GetWhereLikeStruct(v reflect.Value, t reflect.Type, searchParam string, fie
 
 			i2 := strings.Index(str1, `"`)
 			str2 := str1[:i2]
-			varFieldtable := fmt.Sprintf(str2)
+			varFieldtable := fmt.Sprint(str2)
 			fmt.Printf("%v\n", varType)
 			sType := fmt.Sprintf("%v\n", varType)
-			fmt.Printf(sType)
+			fmt.Print(sType)
 			if strings.Contains(sType, "models") {
 				continue
 			}
