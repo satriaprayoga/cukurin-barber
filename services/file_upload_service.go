@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/satriaprayoga/cukurin-barber/models"
-	repo "github.com/satriaprayoga/cukurin-barber/repository"
+	repo "github.com/satriaprayoga/cukurin-barber/repository/file_upload"
 )
 
 type fileUploadService struct {

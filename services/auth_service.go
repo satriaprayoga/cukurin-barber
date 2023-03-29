@@ -10,7 +10,7 @@ import (
 	"github.com/satriaprayoga/cukurin-barber/pkg/sessions"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
 	"github.com/satriaprayoga/cukurin-barber/pkg/utils"
-	repo "github.com/satriaprayoga/cukurin-barber/repository"
+	repo "github.com/satriaprayoga/cukurin-barber/repository/k_user"
 	"github.com/satriaprayoga/cukurin-barber/token"
 )
 

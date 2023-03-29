@@ -11,7 +11,7 @@ import (
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
 	"github.com/satriaprayoga/cukurin-barber/pkg/utils"
-	repo "github.com/satriaprayoga/cukurin-barber/repository"
+	repo "github.com/satriaprayoga/cukurin-barber/repository/k_user"
 	"github.com/satriaprayoga/cukurin-barber/token"
 )
 

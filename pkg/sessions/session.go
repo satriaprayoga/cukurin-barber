@@ -7,7 +7,7 @@ import (
 
 	"github.com/satriaprayoga/cukurin-barber/models"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
-	repo "github.com/satriaprayoga/cukurin-barber/repository"
+	repo "github.com/satriaprayoga/cukurin-barber/repository/k_session"
 )
 
 var sessionRepo repo.IKSessionRepository

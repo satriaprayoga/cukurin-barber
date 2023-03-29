@@ -7,7 +7,7 @@ import (
 	"github.com/satriaprayoga/cukurin-barber/controllers"
 	"github.com/satriaprayoga/cukurin-barber/pkg/database"
 	"github.com/satriaprayoga/cukurin-barber/pkg/settings"
-	repo "github.com/satriaprayoga/cukurin-barber/repository"
+	repo "github.com/satriaprayoga/cukurin-barber/repository/file_upload"
 	"github.com/satriaprayoga/cukurin-barber/services"
 )
 
