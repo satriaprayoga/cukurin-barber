@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/satriaprayoga/cukurin-barber/interfaces/repo"
 	"github.com/satriaprayoga/cukurin-barber/interfaces/services"
 	"github.com/satriaprayoga/cukurin-barber/models"
@@ -18,14 +17,15 @@ import (
 
 type kUserService struct {
 	kuserrepo      repo.IKUserRepository
+	fileRepo       repo.IFileUploadRepository
 	contextTimeOut time.Duration
 }
 
-func NewKUserService(kUserRepo repo.IKUserRepository, cto time.Duration) services.IKUserService {
-	return &kUserService{kuserrepo: kUserRepo, contextTimeOut: cto}
+func NewKUserService(kUserRepo repo.IKUserRepository, fileRepo repo.IFileUploadRepository, cto time.Duration) services.IKUserService {
+	return &kUserService{kuserrepo: kUserRepo, fileRepo: fileRepo, contextTimeOut: cto}
 }
 
-func (r *kUserService) GetByEmailKUser(ctx context.Context, email string, usertype string) (result models.KUser, err error) {
+func (r *kUserService) GetByEmailSaUser(ctx context.Context, email string, usertype string) (result models.KUser, err error) {
 	_, cancel := context.WithTimeout(ctx, r.contextTimeOut)
 	defer cancel()
 
@@ -72,7 +72,14 @@ func (r *kUserService) GetDataBy(ctx context.Context, Claims token.Claims, ID in
 	_, cancel := context.WithTimeout(ctx, r.contextTimeOut)
 	defer cancel()
 
-	DataUser, err := r.kuserrepo.GetDataBy(ID)
+	DataOwner, err := r.kuserrepo.GetDataBy(ID)
+	if err != nil {
+		if err != models.ErrNotFound {
+			return result, err
+		}
+	}
+
+	DataFile, err := r.fileRepo.GetByID(DataOwner.FileID)
 	if err != nil {
 		if err != models.ErrNotFound {
 			return result, err
@@ -80,11 +87,13 @@ func (r *kUserService) GetDataBy(ctx context.Context, Claims token.Claims, ID in
 	}
 
 	response := map[string]interface{}{
-		"user_id":       DataUser.UserID,
-		"user_name":     DataUser.UserName,
-		"birth_of_date": DataUser.BirthOfDate,
-		"email":         DataUser.Email,
-		"telp":          DataUser.Telp,
+		"owner_id":   DataOwner.UserID,
+		"owner_name": DataOwner.Name,
+		"email":      DataOwner.Email,
+		"telp":       DataOwner.Telp,
+		"file_id":    DataOwner.FileID,
+		"file_name":  DataFile.FileName,
+		"file_path":  DataFile.FilePath,
 	}
 	return response, nil
 }
@@ -113,7 +122,7 @@ func (r *kUserService) GetList(ctx context.Context, Claims token.Claims, querypa
 	return result, nil
 }
 
-func (r *kUserService) Create(ctx context.Context, data *models.KUser) (err error) {
+func (r *kUserService) Create(ctx context.Context, Claims token.Claims, data *models.KUser) (err error) {
 	_, cancel := context.WithTimeout(ctx, r.contextTimeOut)
 	defer cancel()
 
@@ -132,7 +141,12 @@ func (r *kUserService) Update(ctx context.Context, Claims token.Claims, ID int, 
 	if dataUser.UserID != ID {
 		return errors.New("email sudah terdaftar")
 	}
-	datas := structs.Map(data)
+	var datas = map[string]interface{}{
+		"name":    data.Name,
+		"telp":    data.Telp,
+		"email":   data.Email,
+		"file_id": data.FileID,
+	}
 	datas["user_edit"] = Claims.UserID
 	err = r.kuserrepo.Update(ID, data)
 	if err != nil {

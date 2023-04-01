@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/astaxie/beego v1.12.3
-	github.com/fatih/structs v1.1.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.10.2
