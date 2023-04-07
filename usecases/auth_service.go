@@ -18,11 +18,12 @@ import (
 type authService struct {
 	repoKUser repo.IKUserRepository
 	//repoKSession   repo.IKSessionRepository
+	repoFileUpload repo.IFileUploadRepository
 	contextTimeOut time.Duration
 }
 
-func NewAuthService(a repo.IKUserRepository /*b repo.IKSessionRepository,*/, timeout time.Duration) services.IAuthService {
-	return &authService{repoKUser: a /*repoKSession: b,*/, contextTimeOut: timeout}
+func NewAuthService(a repo.IKUserRepository, f repo.IFileUploadRepository /*b repo.IKSessionRepository,*/, timeout time.Duration) services.IAuthService {
+	return &authService{repoKUser: a /*repoKSession: b,*/, repoFileUpload: f, contextTimeOut: timeout}
 }
 
 func (a *authService) Logout(ctx context.Context, claims token.Claims) error {
@@ -35,6 +36,171 @@ func (a *authService) Logout(ctx context.Context, claims token.Claims) error {
 	}
 	return nil
 }
+
+func (a *authService) Login(ctx context.Context, dataLogin *models.LoginForm) (output interface{}, err error) {
+	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
+	defer cancel()
+
+	var (
+		DataOwner        = models.KUser{}
+		DataCapster      = models.LoginCapster{}
+		isBarber    bool = true
+		response         = map[string]interface{}{}
+		expireToken      = settings.AppConfigSetting.JWTExpired
+		canChange   bool = false
+		//ksession    models.KSession
+	)
+
+	if dataLogin.UserType == "owner" {
+		DataOwner, err = a.repoKUser.GetByAccount(dataLogin.Account, dataLogin.UserType)
+		if DataOwner.UserType == "" && err == models.ErrNotFound {
+			return nil, errors.New("email anda belum terdaftar")
+		} else {
+			if DataOwner.UserType == "capster" {
+				DataCapster, err = a.repoKUser.GetByCapster(dataLogin.Account)
+				if err != nil {
+					return nil, errors.New("email anda belum terdaftar")
+				}
+				if !DataCapster.IsActive {
+					return nil, errors.New("account anda belum aktif")
+				}
+				if DataCapster.BarberID == 0 {
+					return nil, errors.New("anda belum terdaftar di barber manapun")
+				}
+				if !DataCapster.BarberIsActive {
+					return nil, errors.New("saat ini barber anda tidak aktif")
+				}
+				isBarber = false
+			} else {
+				DataCapster, err = a.repoKUser.GetByCapster(dataLogin.Account)
+				if DataCapster.Email != "" && DataCapster.Email == dataLogin.Account {
+					canChange = true
+				}
+			}
+			if !DataOwner.IsActive {
+				return nil, errors.New("account anda belum aktif")
+			}
+		}
+	} else {
+		isBarber = false
+		DataCapster, err = a.repoKUser.GetByCapster(dataLogin.Account)
+		if err != nil {
+			return nil, errors.New("email anda belum terdaftar")
+		}
+		if !DataCapster.IsActive {
+			return nil, errors.New("account anda belum aktif. Silahkan hubungi pemilik Barber")
+		}
+
+		if DataCapster.BarberID == 0 {
+			return nil, errors.New("anda belum terhubung dengan Barber, Silahkan hubungi pemilik Barber")
+		}
+
+		if !DataCapster.BarberIsActive {
+			return nil, errors.New("saat ini barber anda sedang tidak aktif")
+		}
+
+		DataOwner, err = a.repoKUser.GetByAccount(dataLogin.Account, dataLogin.UserType)
+		if DataOwner.Email != "" && DataOwner.Email == dataLogin.Account {
+			canChange = true
+		}
+	}
+
+	if isBarber {
+		if !utils.ComparePassword(DataOwner.Password, utils.GetPassword(dataLogin.Password)) {
+			return nil, errors.New("password yang anda masukkan salah")
+		}
+		DataFile, err := a.repoFileUpload.GetByID(DataOwner.FileID)
+		if err != nil {
+			return nil, errors.New("foto tidak ditemukan")
+		}
+		sessionID := uuid.New().String()
+		jwtToken, err := token.GenerateToken(sessionID, DataOwner.UserID, DataOwner.UserName, DataOwner.UserType)
+		if err != nil {
+			return nil, err
+		}
+		err = sessions.CreateSession(sessionID, "auth", dataLogin.Account, DataOwner.UserID, time.Now().Add(time.Hour*time.Duration(expireToken)))
+		if err != nil {
+			return nil, err
+		}
+		restUser := map[string]interface{}{
+			"owner_id":   DataOwner.UserID,
+			"owner_name": DataOwner.Name,
+			"email":      DataOwner.Email,
+			"telp":       DataOwner.Telp,
+			"file_id":    DataOwner.FileID,
+			"file_name":  DataFile.FileName,
+			"file_path":  DataFile.FilePath,
+		}
+		response = map[string]interface{}{
+			"token":      jwtToken,
+			"data_owner": restUser,
+			"user_type":  "barber",
+			"can_change": canChange,
+		}
+
+	} else {
+		if !utils.ComparePassword(DataCapster.Password, utils.GetPassword(dataLogin.Password)) {
+			return nil, errors.New("password yang anda masukkan salah")
+		}
+		sessionID := uuid.New().String()
+		jwtToken, err := token.GenerateToken(sessionID, DataCapster.CapsterID, DataCapster.CapsterName, "capster")
+		if err != nil {
+			return nil, err
+		}
+		err = sessions.CreateSession(sessionID, "auth", dataLogin.Account, DataCapster.CapsterID, time.Now().Add(time.Hour*time.Duration(expireToken)))
+		if err != nil {
+			return nil, err
+		}
+
+		restUser := map[string]interface{}{
+			"owner_id":     DataCapster.OwnerID,
+			"owner_name":   DataCapster.OwnerName,
+			"barber_id":    DataCapster.BarberID,
+			"barber_name":  DataCapster.BarberName,
+			"capster_id":   DataCapster.CapsterID,
+			"email":        DataCapster.Email,
+			"telp":         DataCapster.Telp,
+			"capster_name": DataCapster.CapsterName,
+			"file_id":      DataCapster.FileID,
+			"file_name":    DataCapster.FileName,
+			"file_path":    DataCapster.FilePath,
+		}
+		response = map[string]interface{}{
+			"token":        jwtToken,
+			"data_capster": restUser,
+			"user_type":    "capster",
+			"can_change":   canChange,
+		}
+	}
+
+	return response, nil
+}
+
+func (a *authService) ForgotPassword(ctx context.Context, dataForgt *models.ForgotForm) (result string, err error) {
+	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
+	defer cancel()
+
+	DataUser, err := a.repoKUser.GetByAccount(dataForgt.Account, dataForgt.UserType)
+	if err != nil {
+		return "", errors.New("akun tidak valid")
+	}
+
+	if DataUser.UserName == "" {
+		return "", errors.New("akun tidak valid")
+	}
+
+	GenOTP := utils.GenerateNumber(4)
+	DataUser.Password, _ = utils.Hash(GenOTP)
+	err = a.repoKUser.UpdatePasswordByEmail(dataForgt.Account, DataUser.Password)
+	if err != nil {
+		return "", err
+	}
+
+	//mailservice
+
+	return GenOTP, nil
+}
+
 func (a *authService) Register(ctx context.Context, dataRegister models.RegisterForm) (output interface{}, err error) {
 	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
 	defer cancel()
@@ -103,64 +269,6 @@ func (a *authService) Register(ctx context.Context, dataRegister models.Register
 	return out, nil
 }
 
-func (a *authService) Login(ctx context.Context, dataLogin *models.LoginForm) (output interface{}, err error) {
-	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
-	defer cancel()
-
-	var (
-		expireToken = settings.AppConfigSetting.JWTExpired
-		//ksession    models.KSession
-	)
-
-	DataUser, err := a.repoKUser.GetByAccount(dataLogin.Account, dataLogin.UserType)
-	if err != nil {
-		return nil, errors.New("email belum terdaftar")
-	}
-
-	if DataUser.UserType != "user" {
-		return nil, errors.New("email belum terdaftar")
-	}
-
-	if !DataUser.IsActive {
-		return nil, errors.New("akun belum aktif")
-	}
-
-	if !utils.ComparePassword(DataUser.Password, utils.GetPassword(dataLogin.Password)) {
-		return nil, errors.New("password salah")
-	}
-
-	sessionID := uuid.New().String()
-
-	jwtToken, err := token.GenerateToken(sessionID, DataUser.UserID, DataUser.UserName, DataUser.UserType)
-	if err != nil {
-		return nil, err
-	}
-	//ksession.SessionID = sessionID
-	//ksession.UserID = DataUser.UserID
-	//ksession.Account = dataLogin.Account
-	//ksession.ExpiresAt = time.Now().Add(time.Hour * time.Duration(expireToken))
-	//ksession.SessionType = "auth"
-	err = sessions.CreateSession(sessionID, "auth", dataLogin.Account, DataUser.UserID, time.Now().Add(time.Hour*time.Duration(expireToken)))
-	//err = a.repoKSession.Create(&ksession)
-	if err != nil {
-		return nil, err
-	}
-	restUser := map[string]interface{}{
-		"user_id":   DataUser.UserID,
-		"email":     DataUser.Email,
-		"telp":      DataUser.Telp,
-		"user_name": DataUser.Name,
-		"user_type": DataUser.UserType,
-	}
-
-	response := map[string]interface{}{
-		"token":     jwtToken,
-		"data_user": restUser,
-	}
-
-	return response, nil
-}
-
 func (a *authService) ResetPassword(ctx context.Context, dataReset *models.ResetPasswd) (err error) {
 	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
 	defer cancel()
@@ -187,31 +295,6 @@ func (a *authService) ResetPassword(ctx context.Context, dataReset *models.Reset
 
 	return nil
 
-}
-
-func (a *authService) ForgotPassword(ctx context.Context, dataForgt *models.ForgotForm) (result string, err error) {
-	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
-	defer cancel()
-
-	DataUser, err := a.repoKUser.GetByAccount(dataForgt.Account, dataForgt.UserType)
-	if err != nil {
-		return "", errors.New("akun tidak valid")
-	}
-
-	if DataUser.UserName == "" {
-		return "", errors.New("akun tidak valid")
-	}
-
-	GenOTP := utils.GenerateNumber(4)
-	DataUser.Password, _ = utils.Hash(GenOTP)
-	err = a.repoKUser.UpdatePasswordByEmail(dataForgt.Account, DataUser.Password)
-	if err != nil {
-		return "", err
-	}
-
-	//mailservice
-
-	return GenOTP, nil
 }
 
 func (a *authService) VerifyRegisterLogin(ctx context.Context, dataVerify *models.VerifyForm) (output interface{}, err error) {

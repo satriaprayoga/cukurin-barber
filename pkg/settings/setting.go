@@ -51,12 +51,22 @@ type RedisDB struct {
 	Password string `mapstructure:"password"`
 }
 
+type SMTP struct {
+	Server   string `mapstructure:"server"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Passwd   string `mapstructure:"passwd"`
+	Identity string `mapstructure:"identity"`
+	Sender   string `mapstructure:"sender"`
+}
+
 type FileConfig struct {
 	JWTExpired int       `mapstructure:"expire_jwt"`
 	Server     *Server   `mapstructure:"server"`
 	App        *App      `mapstructure:"app"`
 	Database   *Database `mapstructure:"database"`
 	RedisDB    *RedisDB  `mapstructure:"redisdb"`
+	SMTP       *SMTP     `mapstructure:"smtp"`
 }
 
 var AppConfigSetting = &FileConfig{}
