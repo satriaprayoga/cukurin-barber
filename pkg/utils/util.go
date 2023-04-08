@@ -56,6 +56,16 @@ func GenerateNumber(n int) string {
 	return string(b)
 }
 
+func GenerateCode(n int) string {
+	rand.Seed(time.Now().UnixNano())
+	var letterRunes = []rune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
 func GenerateString(n int) string {
 	var sb strings.Builder
 	k := len(ALPHABET)

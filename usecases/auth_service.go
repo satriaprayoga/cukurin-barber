@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -258,60 +259,78 @@ func (a *authService) Register(ctx context.Context, dataRegister models.Register
 		//ksession models.KSession
 	)
 
-	CekData, err := a.repoKUser.GetByAccount(dataRegister.Account, dataRegister.UserType)
-	if CekData.Email == dataRegister.Account {
-		if CekData.IsActive {
-			return output, errors.New("email sudah terdaftar")
-		}
+	CekData, err := a.repoKUser.GetByAccount(dataRegister.EmailAddr, "owner")
+	if CekData.Email == dataRegister.EmailAddr {
+		return output, errors.New("email sudah terdaftar")
 	}
 
-	if dataRegister.Passwd != dataRegister.ConfirmPasswd {
-		return output, errors.New("password dan confirm password harus sama")
-	}
+	GenPassword := utils.GenerateCode(4)
+	User.Name = ""
 
-	User.Name = dataRegister.Name
-	User.UserName = dataRegister.UserName
+	User.UserType = "owner"
+	User.UserEdit = "cukur_in"
+	User.UserInput = "cukur_in"
+	User.Email = dataRegister.EmailAddr
+	User.IsActive = true
 	User.JoinDate = time.Now()
-	User.BirthOfDate = dataRegister.BirthOfDate
-	User.UserType = dataRegister.UserType
-	User.IsActive = false
-	User.Email = dataRegister.Account
-	User.Password, _ = utils.Hash(dataRegister.Passwd)
 
-	if CekData.UserID > 0 && !CekData.IsActive {
-		CekData.Name = User.Name
-		CekData.Password = User.Password
-		CekData.JoinDate = User.JoinDate
-		CekData.UserType = User.UserType
-		CekData.IsActive = User.IsActive
-		CekData.Email = User.Email
-		err = a.repoKUser.Update(CekData.UserID, CekData)
-		if err != nil {
-			return output, err
-		}
-	} else {
-		User.UserEdit = dataRegister.UserName
-		User.UserInput = dataRegister.UserName
-		err = a.repoKUser.Create(&User)
-		if err != nil {
-			return output, err
-		}
+	User.Password, _ = utils.Hash(GenPassword)
+
+	err = a.repoKUser.Create(&User)
+	if err != nil {
+		return output, err
+	}
+	mUser := map[string]interface{}{
+		"user_input": strconv.Itoa(User.UserID),
+		"user_edit":  strconv.Itoa(User.UserID),
+	}
+	err = a.repoKUser.Update(User.UserID, mUser)
+	if err != nil {
+		return output, err
 	}
 
-	GenCode := utils.GenerateNumber(4)
+	mailService := &Register{
+		Email:      User.Email,
+		Name:       User.Email,
+		PasswordCd: GenPassword,
+	}
+
+	go mailService.SendRegister()
+
+	// if CekData.UserID > 0 && !CekData.IsActive {
+	// 	CekData.Name = User.Name
+	// 	CekData.Password = User.Password
+	// 	CekData.JoinDate = User.JoinDate
+	// 	CekData.UserType = User.UserType
+	// 	CekData.IsActive = User.IsActive
+	// 	CekData.Email = User.Email
+	// 	err = a.repoKUser.Update(CekData.UserID, CekData)
+	// 	if err != nil {
+	// 		return output, err
+	// 	}
+	// } else {
+	// 	User.UserEdit = dataRegister.UserName
+	// 	User.UserInput = dataRegister.UserName
+	// 	err = a.repoKUser.Create(&User)
+	// 	if err != nil {
+	// 		return output, err
+	// 	}
+	// }
+
+	// GenCode := utils.GenerateNumber(4)
 	//ksession.SessionID = GenCode
 	//ksession.UserID = User.UserID
 	//ksession.SessionType = "register"
 	//ksession.ExpiresAt = time.Now().Add(time.Hour * time.Duration(24))
 	//ksession.Account = User.Email
-	err = sessions.CreateSession(GenCode, "register", User.Email, User.UserID, time.Now().Add(time.Hour*time.Duration(24)))
+	err = sessions.CreateSession(GenPassword, "register", User.Email, User.UserID, time.Now().Add(time.Hour*time.Duration(24)))
 	//err = a.repoKSession.Create(&ksession)
 	if err != nil {
+		a.repoKUser.Delete(User.UserID)
 		return nil, err
 	}
 	out := map[string]interface{}{
-		"otp":     GenCode,
-		"account": User.Email,
+		"gen_password": GenPassword,
 	}
 
 	return out, nil
