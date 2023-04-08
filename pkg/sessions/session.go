@@ -57,3 +57,11 @@ func DeleteByUserID(UserID int) error {
 	}
 	return nil
 }
+
+func DeleteBySessionID(SessionID string) error {
+	err := sessionRepo.DeleteBySessionID(SessionID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -96,3 +96,18 @@ func (db *repoKSession) DeleteByUserID(UserID int) (err error) {
 	return nil
 
 }
+
+func (db *repoKSession) DeleteBySessionID(SessionID string) (err error) {
+
+	var (
+		logger = logging.Logger{}
+	)
+	query := db.Conn.Where("session_id=?", SessionID).Delete(&models.KSession{})
+	logger.Query(fmt.Sprintf("%v", query))
+	err = query.Error
+	if err != nil {
+		return err
+	}
+	return nil
+
+}

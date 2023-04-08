@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -190,15 +191,62 @@ func (a *authService) ForgotPassword(ctx context.Context, dataForgt *models.Forg
 	}
 
 	GenOTP := utils.GenerateNumber(4)
-	DataUser.Password, _ = utils.Hash(GenOTP)
-	err = a.repoKUser.UpdatePasswordByEmail(dataForgt.Account, DataUser.Password)
+
+	mailService := &Forgot{
+		Email: DataUser.Email,
+		Name:  DataUser.Name,
+		OTP:   GenOTP,
+	}
+
+	data, err := sessions.GetSession(GenOTP)
+	if err == nil {
+		fmt.Printf("deleting session :%v", data)
+		sessions.DeleteBySessionID(GenOTP)
+	}
+	err = sessions.CreateSession(GenOTP, "forgot", DataUser.Email, DataUser.UserID, time.Now().Add(time.Hour*time.Duration(24)))
 	if err != nil {
 		return "", err
 	}
 
+	go mailService.SendForgot()
+
+	//DataUser.Password, _ = utils.Hash(GenOTP)
+	//err = a.repoKUser.UpdatePasswordByEmail(dataForgt.Account, DataUser.Password)
+	//if err != nil {
+	//	return "", err
+	//}
+
 	//mailservice
 
 	return GenOTP, nil
+}
+
+func (a *authService) ResetPassword(ctx context.Context, dataReset *models.ResetPasswd) (err error) {
+	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
+	defer cancel()
+
+	if dataReset.Passwd != dataReset.ConfirmPasswd {
+		return errors.New("password dan confirm Password harus sama")
+	}
+
+	DataUser, err := a.repoKUser.GetByAccount(dataReset.Account, dataReset.UserType)
+	if err != nil {
+		return err
+	}
+
+	if utils.ComparePassword(DataUser.Password, utils.GetPassword(dataReset.Passwd)) {
+		return errors.New("password baru tidak boleh sama dengan yang lama")
+	}
+
+	DataUser.Password, _ = utils.Hash(dataReset.Passwd)
+
+	err = a.repoKUser.UpdatePasswordByEmail(dataReset.Account, DataUser.Password)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 func (a *authService) Register(ctx context.Context, dataRegister models.RegisterForm) (output interface{}, err error) {
@@ -267,34 +315,6 @@ func (a *authService) Register(ctx context.Context, dataRegister models.Register
 	}
 
 	return out, nil
-}
-
-func (a *authService) ResetPassword(ctx context.Context, dataReset *models.ResetPasswd) (err error) {
-	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
-	defer cancel()
-
-	if dataReset.Passwd != dataReset.ConfirmPasswd {
-		return errors.New("password dan confirm Password harus sama")
-	}
-
-	DataUser, err := a.repoKUser.GetByAccount(dataReset.Account, "user")
-	if err != nil {
-		return err
-	}
-
-	if utils.ComparePassword(DataUser.Password, utils.GetPassword(dataReset.Passwd)) {
-		return errors.New("password baru tidak boleh sama dengan yang lama")
-	}
-
-	DataUser.Password, _ = utils.Hash(dataReset.Passwd)
-
-	err = a.repoKUser.UpdatePasswordByEmail(dataReset.Account, DataUser.Password)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
 }
 
 func (a *authService) VerifyRegisterLogin(ctx context.Context, dataVerify *models.VerifyForm) (output interface{}, err error) {

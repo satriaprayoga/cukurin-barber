@@ -10,4 +10,5 @@ type IKSessionRepository interface {
 	GetByAccount(account string) (output *models.KSession, err error)
 	GetBySessionID(SessionID string) (output *models.KSession, err error)
 	DeleteByUserID(UserID int) (err error)
+	DeleteBySessionID(SessionID string) (err error)
 }
