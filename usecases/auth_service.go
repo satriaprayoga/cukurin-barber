@@ -441,3 +441,19 @@ func (a *authService) VerifyRegister(ctx context.Context, dataVerify *models.Ver
 
 	return restUser, nil
 }
+
+func (a *authService) VerifyForgot(ctx context.Context, dataVerify models.VerifyForm) (err error) {
+	_, cancel := context.WithTimeout(ctx, a.contextTimeOut)
+	defer cancel()
+
+	data, err := sessions.GetSessionType(dataVerify.VerifyCode, "forgot")
+	if err != nil {
+		return errors.New("please resend code")
+	}
+	if data.SessionID != dataVerify.VerifyCode {
+		return errors.New("invalid code")
+	}
+
+	sessions.DeleteBySessionID(dataVerify.VerifyCode)
+	return nil
+}

@@ -82,6 +82,23 @@ func (db *repoKSession) GetBySessionID(SessionID string) (output *models.KSessio
 	return ksession, nil
 }
 
+func (db *repoKSession) GetByIDAndType(SessionID, sessionType string) (output *models.KSession, err error) {
+	var (
+		ksession = &models.KSession{}
+		logger   = logging.Logger{}
+	)
+	query := db.Conn.Where("session_id=? AND session_type=?", SessionID, sessionType).Find(ksession)
+	logger.Query(fmt.Sprintf("%v", query))
+	err = query.Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.ErrNotFound
+		}
+		return nil, err
+	}
+	return ksession, nil
+}
+
 func (db *repoKSession) DeleteByUserID(UserID int) (err error) {
 
 	var (

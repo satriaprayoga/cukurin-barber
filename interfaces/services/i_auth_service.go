@@ -14,4 +14,5 @@ type IAuthService interface {
 	ResetPassword(ctx context.Context, dataReset *models.ResetPasswd) (err error)
 	VerifyRegister(ctx context.Context, dataVerify *models.VerifyForm) (output interface{}, err error)
 	VerifyRegisterLogin(ctx context.Context, dataVerify *models.VerifyForm) (output interface{}, err error)
+	VerifyForgot(ctx context.Context, dataVerify models.VerifyForm) (err error)
 }

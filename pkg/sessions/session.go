@@ -28,6 +28,14 @@ func GetSession(sessionID string) (*models.KSession, error) {
 	return k_session, nil
 }
 
+func GetSessionType(sessionID, sessionType string) (*models.KSession, error) {
+	k_session, err := sessionRepo.GetByIDAndType(sessionID, sessionType)
+	if err != nil {
+		return nil, errors.New("session not found")
+	}
+	return k_session, nil
+}
+
 func GetSessionByAccount(Account string) (*models.KSession, error) {
 	k_session, err := sessionRepo.GetByAccount(Account)
 	if err != nil {
